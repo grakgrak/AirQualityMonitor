@@ -17,7 +17,8 @@ const char *password = WIFI_PASSWORD;
 #define MQTT_PUBLISH_SECS 5
 #define PMS_SLEEP_SECS 120
 
-#define ALPHA 0.35
+#define RX_PIN 5
+#define TX_PIN 4
 
 SoftwareSerial swSerial;
 AsyncMqttClient mqttClient;
@@ -37,25 +38,19 @@ unsigned long pmsAwakeAt = 0;
 class ArithmeticMean
 {
 private:
-    double _alpha;
+    const double ALPHA = 0.35;
     double _average = 0.0;
 public:
-    ArithmeticMean(double alpha) { _alpha = alpha; }
-
     void Update(double val)
     {
-        _average = _alpha * val + (1.0 - _alpha) * _average;
+        _average = ALPHA * val + (1.0 - ALPHA) * _average;
     }
     double Average() { return _average; }
 };
 
 //--------------------------------------------------------------------
-ArithmeticMean PM10(ALPHA);
-ArithmeticMean PM25(ALPHA);
-ArithmeticMean PM100(ALPHA);
-ArithmeticMean PPD03(ALPHA);
-ArithmeticMean PPD05(ALPHA);
-ArithmeticMean PPD10(ALPHA);
+ArithmeticMean PM10, PM25, PM100;
+ArithmeticMean PPD03, PPD05, PPD10;
 
 //------------------------------------------------------------------------
 unsigned long AwakeForMillis()
@@ -230,184 +225,13 @@ void setup()
     init_OTA();
     init_mqtt();
 
-    swSerial.begin(9600, SWSERIAL_8N1, 5, 4);
+    swSerial.begin(9600, SWSERIAL_8N1, RX_PIN, TX_PIN);
 
     pms.activeMode();
     pms.wakeUp();
 
     Serial.println("Setup Done.");
 }
-
-
-//------------------------------------------------------------------------
-// bool pmsA003ReadData()
-// {
-
-//     // while (swSerial.read()!=-1) {}; //clear buffer
-
-//     if (swSerial.available() < 32)
-//     {
-//         if (swSerial.available() == 0)
-//         {
-//             delay(150);
-//             return 0;
-//         };
-//         if (swSerial.available() > 16)
-//         {
-//             delay(10);
-//             return 0;
-//         };
-//         if (swSerial.available() > 0)
-//         {
-//             delay(30);
-//             return 0;
-//         };
-//         delay(100);
-//         return 0;
-//     }
-//     if (swSerial.read() != 0x42)
-//         return 0;
-//     if (swSerial.read() != 0x4D)
-//         return 0;
-
-//     inputChecksum = 0x42 + 0x4D;
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     if (inputHigh != 0x00)
-//         return 0;
-//     if (inputLow != 0x1c)
-//         return 0;
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     concPM1_0_CF1 = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     concPM2_5_CF1 = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     concPM10_0_CF1 = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     concPM1_0_amb = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     concPM2_5_amb = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     concPM10_0_amb = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     rawGt0_3um = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     rawGt0_5um = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     rawGt1_0um = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     rawGt2_5um = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     rawGt5_0um = inputLow + (inputHigh << 8);
-
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     inputChecksum += inputHigh + inputLow;
-//     rawGt10_0um = inputLow + (inputHigh << 8);
-
-//     inputLow = swSerial.read();
-//     inputChecksum += inputLow;
-//     version = inputLow;
-
-//     inputLow = swSerial.read();
-//     inputChecksum += inputLow;
-//     errorCode = inputLow;
-//     /*
-//  Serial.print("PMSA003;\t");
-//  Serial.print(concPM1_0_CF1);
-//  Serial.print(';');
-//  Serial.print(concPM2_5_CF1);
-//  Serial.print(';');
-//  Serial.print(concPM10_0_CF1);
-//  Serial.print(";\t");
-//  Serial.print(concPM1_0_amb);
-//  Serial.print(';');
-//  Serial.print(concPM2_5_amb);
-//  Serial.print(';');
-//  Serial.print(concPM10_0_amb);
-//  Serial.print(";\t");
-//  Serial.print(rawGt0_3um);
-//  Serial.print(';');
-//  Serial.print(rawGt0_5um);
-//  Serial.print(';');
-//  Serial.print(rawGt1_0um);
-//  Serial.print(';');
-//  Serial.print(rawGt2_5um);
-//  Serial.print(';');
-//  Serial.print(rawGt5_0um);
-//  Serial.print(';');
-//  Serial.print(rawGt10_0um);
-//  Serial.print(';');
-//  Serial.print(version);
-//  Serial.print(';');
-//  Serial.print(errorCode);
-//  Serial.println();
-//  */
-//     inputHigh = swSerial.read();
-//     inputLow = swSerial.read();
-//     checksum = inputLow + (inputHigh << 8);
-//     if (checksum != inputChecksum)
-//     {
-//         /*
-//  Serial.print(';');
-//  Serial.print(checksum);
-//  Serial.print(';');
-//  Serial.print(inputChecksum);
-//  Serial.println();
-//  */
-//         return 0;
-//     }
-
-//     // only update the averages after 20 seconds
-//     if (millis() > 20000ul)
-//     {
-//         PM10.Update(concPM1_0_amb);
-//         PM25.Update(concPM2_5_amb);
-//         PM100.Update(concPM10_0_amb);
-//         PPD03.Update(rawGt0_3um);
-//         PPD05.Update(rawGt0_5um);
-//         PPD10.Update(rawGt1_0um);
-//     }
-
-//     delay(700); // higher will get you checksum errors
-
-//     return 1;
-// }
 
 //------------------------------------------------------------------------
 void loop()
