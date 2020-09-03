@@ -15,7 +15,7 @@ const char *password = WIFI_PASSWORD;
 #define MQTT_HOST IPAddress(192, 168, 1, 210)
 #define MQTT_PORT 1883
 #define MQTT_PUBLISH_SECS 5
-#define PMS_SLEEP_SECS 120
+#define PMS_SLEEP_SECS 300
 
 #define RX_PIN 5
 #define TX_PIN 4
@@ -65,7 +65,7 @@ void SleepPMS()
     pmsAwake = false;
     pms.sleep();
 
-    // sleep for 120 secs
+    // sleep between recording events
     pmsSleepTimer.once(PMS_SLEEP_SECS, []() {
         pms.wakeUp();
         pmsAwake = true;
